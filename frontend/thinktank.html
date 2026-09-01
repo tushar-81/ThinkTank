@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ThinkTank</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --green: #00e676;
+  --green-dim: #00c853;
+  --green-glow: rgba(0,230,118,0.18);
+  --green-glow-soft: rgba(0,230,118,0.07);
+  --bg: #050805;
+  --bg2: #0a0f0a;
+  --bg3: #0f1a0f;
+  --bg4: #111d11;
+  --surface: #101810;
+  --surface2: #162016;
+  --border: rgba(0,230,118,0.13);
+  --border-bright: rgba(0,230,118,0.35);
+  --text: #e8f5e9;
+  --text-dim: #81c784;
+  --text-muted: #4a6e4a;
+  --red: #ff5252;
+  --amber: #ffd740;
+  --radius: 6px;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow:hidden;}
+
+/* ── scanline overlay ── */
+body::before{
+  content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);
+  pointer-events:none;z-index:9999;
+}
+
+/* ── grid bg ── */
+body::after{
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(0,230,118,0.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,230,118,0.04) 1px,transparent 1px);
+  background-size:48px 48px;
+  pointer-events:none;z-index:0;
+}
+
+/* ══════════════ LOGIN SCREEN ══════════════ */
+#login-screen{
+  position:fixed;inset:0;z-index:1000;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:var(--bg);
+  animation:fadeIn .4s ease;
+}
+
+.login-logo{display:flex;align-items:center;gap:16px;margin-bottom:48px;}
+.login-logo img{width:220px;height:auto;object-fit:contain;filter:drop-shadow(0 0 18px var(--green));}
+.login-logo-text{font-family:'Rajdhani',sans-serif;font-size:42px;font-weight:700;letter-spacing:4px;color:var(--green);text-shadow:0 0 30px var(--green);}
+
+.login-box{
+  background:var(--surface);border:1px solid var(--border-bright);border-radius:10px;
+  padding:36px 40px;width:360px;
+  box-shadow:0 0 60px rgba(0,230,118,0.08);
+}
+.login-box h2{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:600;letter-spacing:2px;color:var(--text-dim);margin-bottom:24px;text-transform:uppercase;}
+.login-box label{display:block;font-size:11px;letter-spacing:1px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;}
+.login-box input{
+  width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);
+  padding:10px 14px;font-size:14px;color:var(--text);font-family:'Inter',sans-serif;outline:none;
+  transition:border-color .2s;margin-bottom:20px;
+}
+.login-box input:focus{border-color:var(--green);}
+.btn-login{
+  width:100%;background:var(--green);color:#000;font-family:'Rajdhani',sans-serif;
+  font-size:16px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  border:none;border-radius:var(--radius);padding:12px;cursor:pointer;
+  transition:box-shadow .2s,transform .1s;
+}
+.btn-login:hover{box-shadow:0 0 24px rgba(0,230,118,0.5);transform:translateY(-1px);}
+.btn-login:active{transform:translateY(0);}
+
+/* ══════════════ APP SHELL ══════════════ */
+#app{display:none;height:100vh;flex-direction:column;position:relative;z-index:1;}
+
+/* ── Header ── */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;height:56px;
+  background:rgba(5,8,5,0.95);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(10px);
+  flex-shrink:0;
+  position:relative;z-index:10;
+}
+.header-left{display:flex;align-items:center;gap:14px;}
+.header-logo{width:160px;height:auto;object-fit:contain;filter:drop-shadow(0 0 10px var(--green));}
+.header-title{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;letter-spacing:3px;color:var(--green);text-shadow:0 0 15px rgba(0,230,118,0.5);}
+.header-right{display:flex;align-items:center;gap:16px;}
+.user-badge{
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg3);border:1px solid var(--border);border-radius:20px;
+  padding:5px 14px 5px 8px;
+}
+.user-avatar{
+  width:26px;height:26px;border-radius:50%;background:var(--green);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:#000;flex-shrink:0;
+}
+.user-name{font-size:13px;font-weight:500;color:var(--text-dim);}
+.online-indicator{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);}
+.online-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+.room-tag{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);background:var(--bg3);border:1px solid var(--border);padding:3px 10px;border-radius:20px;}
+
+/* ══════════════ MAIN LAYOUT ══════════════ */
+.main{display:flex;flex:1;overflow:hidden;}
+
+/* ── Sidebar ── */
+.sidebar{
+  width:220px;flex-shrink:0;
+  background:var(--bg2);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;padding:16px 12px;gap:4px;
+  overflow-y:auto;
+}
+.sidebar-section{font-size:10px;letter-spacing:1.5px;color:var(--text-muted);text-transform:uppercase;padding:8px 8px 4px;margin-top:8px;}
+.sidebar-item{
+  display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius);
+  font-size:13px;color:var(--text-dim);cursor:pointer;transition:all .15s;
+  border:1px solid transparent;
+}
+.sidebar-item:hover{background:var(--green-glow-soft);border-color:var(--border);}
+.sidebar-item.active{background:var(--green-glow-soft);border-color:var(--border-bright);color:var(--green);}
+.sidebar-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.sidebar-dot.online{background:var(--green);box-shadow:0 0 6px var(--green);}
+.sidebar-dot.offline{background:var(--text-muted);}
+
+/* ── Chat area ── */
+.chat-area{
+  flex:1;display:flex;flex-direction:column;overflow:hidden;
+  background:var(--bg);
+}
+
+/* ── Messages ── */
+#messages{
+  flex:1;overflow-y:auto;padding:20px 24px;
+  display:flex;flex-direction:column;gap:2px;
+  scroll-behavior:smooth;
+}
+#messages::-webkit-scrollbar{width:4px;}
+#messages::-webkit-scrollbar-track{background:transparent;}
+#messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* message groups */
+.msg-group{margin-bottom:16px;}
+.msg-meta{display:flex;align-items:baseline;gap:8px;margin-bottom:5px;padding-left:2px;}
+.msg-username{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;letter-spacing:.5px;}
+.msg-username.self{color:var(--green);}
+.msg-username.other{color:var(--amber);}
+.msg-username.ai{color:#64ffda;}
+.msg-username.system-name{color:var(--text-muted);}
+.msg-time{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);}
+
+.msg-bubble{
+  display:inline-block;max-width:72%;
+  padding:10px 14px;border-radius:8px;
+  font-size:14px;line-height:1.65;white-space:pre-wrap;word-break:break-word;
+}
+.bubble-self{
+  background:var(--bg3);border:1px solid rgba(0,230,118,0.2);
+  color:var(--text);margin-left:auto;
+  border-bottom-right-radius:2px;
+}
+.bubble-other{
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--text);
+  border-bottom-left-radius:2px;
+}
+.bubble-ai{
+  background:rgba(0,230,118,0.05);border:1px solid rgba(100,255,218,0.2);
+  color:#e0f7f4;border-radius:8px;max-width:85%;
+  border-left:3px solid #64ffda;
+}
+.bubble-system{
+  background:transparent;border:none;
+  color:var(--text-muted);font-size:12px;
+  font-family:'JetBrains Mono',monospace;text-align:center;
+  padding:4px 0;
+}
+.msg-row-self{display:flex;justify-content:flex-end;}
+.msg-row-other{display:flex;justify-content:flex-start;}
+.msg-row-ai{display:flex;justify-content:flex-start;}
+.msg-row-system{display:flex;justify-content:center;}
+
+.ai-label{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:10px;letter-spacing:1px;color:#64ffda;text-transform:uppercase;
+  margin-bottom:4px;
+}
+.ai-label::before{content:'';width:16px;height:1px;background:#64ffda;}
+
+/* typing indicator */
+.typing-indicator{display:flex;align-items:center;gap:4px;padding:8px 12px;}
+.typing-indicator span{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;}
+.typing-indicator span:nth-child(1){animation:bounce .8s .0s infinite;}
+.typing-indicator span:nth-child(2){animation:bounce .8s .15s infinite;}
+.typing-indicator span:nth-child(3){animation:bounce .8s .3s infinite;}
+@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}
+
+/* ── Input bar ── */
+.input-bar{
+  border-top:1px solid var(--border);
+  background:var(--bg2);
+  padding:14px 20px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;
+}
+.input-hint{
+  font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;
+  transition:color .2s;
+}
+.input-hint.ai-mode{color:var(--green);}
+.input-row{display:flex;gap:10px;align-items:flex-end;}
+#message-input{
+  flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+  padding:11px 16px;font-size:14px;color:var(--text);font-family:'Inter',sans-serif;
+  outline:none;resize:none;min-height:42px;max-height:120px;
+  transition:border-color .2s,box-shadow .2s;line-height:1.5;
+}
+#message-input:focus{border-color:var(--border-bright);}
+#message-input.ai-mode{
+  border-color:var(--green);
+  box-shadow:0 0 16px rgba(0,230,118,0.15);
+}
+.btn-send{
+  background:var(--green);color:#000;border:none;border-radius:8px;
+  padding:11px 22px;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;
+  letter-spacing:1px;cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0;
+}
+.btn-send:hover{box-shadow:0 0 18px rgba(0,230,118,0.45);}
+.btn-send:active{transform:scale(0.97);}
+.btn-send:disabled{opacity:.35;cursor:not-allowed;}
+
+/* ══════════════ INTERRUPT OVERLAY ══════════════ */
+#interrupt-overlay{
+  display:none;position:fixed;inset:0;z-index:500;
+  background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:20px;
+}
+#interrupt-overlay.active{display:flex;}
+
+.interrupt-panel{
+  background:var(--surface);border:1px solid var(--border-bright);border-radius:10px;
+  width:100%;max-height:90vh;overflow-y:auto;
+  box-shadow:0 0 80px rgba(0,230,118,0.15);
+  animation:slideUp .25s ease;
+}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+
+.interrupt-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;border-bottom:1px solid var(--border);
+}
+.interrupt-title{
+  font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;letter-spacing:1.5px;
+  color:var(--green);text-transform:uppercase;display:flex;align-items:center;gap:10px;
+}
+.interrupt-title::before{
+  content:'';width:10px;height:10px;border-radius:50%;
+  background:var(--amber);box-shadow:0 0 10px var(--amber);
+  animation:pulse 1s infinite;
+}
+.interrupt-tag{
+  font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);
+  background:var(--bg3);border:1px solid var(--border);padding:3px 10px;border-radius:20px;
+}
+.interrupt-body{padding:20px;}
+
+/* ── Generic field styling ── */
+.field-group{margin-bottom:16px;}
+.field-label{
+  font-size:11px;letter-spacing:1.2px;color:var(--text-muted);text-transform:uppercase;
+  margin-bottom:6px;display:block;font-family:'JetBrains Mono',monospace;
+}
+.field-input{
+  width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);
+  padding:9px 13px;font-size:13px;color:var(--text);font-family:'Inter',sans-serif;outline:none;
+  transition:border-color .2s;
+}
+.field-input:focus{border-color:var(--green);}
+.field-textarea{
+  width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);
+  padding:9px 13px;font-size:13px;color:var(--text);font-family:'JetBrains Mono',monospace;
+  outline:none;resize:vertical;min-height:100px;line-height:1.6;transition:border-color .2s;
+}
+.field-textarea:focus{border-color:var(--green);}
+.field-select{
+  width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);
+  padding:9px 13px;font-size:13px;color:var(--text);font-family:'Inter',sans-serif;outline:none;
+  transition:border-color .2s;cursor:pointer;
+}
+.field-select:focus{border-color:var(--green);}
+
+.interrupt-actions{
+  display:flex;gap:10px;padding:16px 20px;border-top:1px solid var(--border);
+  justify-content:flex-end;
+}
+.btn-approve{
+  background:var(--green);color:#000;border:none;border-radius:var(--radius);
+  padding:9px 24px;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;
+  letter-spacing:1.5px;cursor:pointer;transition:all .15s;text-transform:uppercase;
+}
+.btn-approve:hover{box-shadow:0 0 18px rgba(0,230,118,.4);}
+.btn-reject{
+  background:transparent;color:var(--red);border:1px solid var(--red);border-radius:var(--radius);
+  padding:9px 24px;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;
+  letter-spacing:1.5px;cursor:pointer;transition:all .15s;text-transform:uppercase;
+}
+.btn-reject:hover{background:rgba(255,82,82,.08);}
+
+/* ── EMAIL DRAFT specific ── */
+.email-draft{
+  background:var(--bg);border:1px solid var(--border);border-radius:8px;overflow:hidden;
+}
+.email-draft-header{
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  background:rgba(0,230,118,0.03);
+}
+.email-draft-row{
+  display:flex;align-items:flex-start;gap:12px;padding:10px 18px;
+  border-bottom:1px solid rgba(0,230,118,0.06);
+}
+.email-draft-row-label{
+  font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);
+  min-width:52px;padding-top:2px;letter-spacing:.5px;
+}
+.email-draft-row input{
+  flex:1;background:transparent;border:none;outline:none;
+  font-size:13px;color:var(--text);font-family:'Inter',sans-serif;
+  border-bottom:1px solid transparent;transition:border-color .2s;padding:2px 0;
+}
+.email-draft-row input:focus{border-bottom-color:var(--green);}
+.email-subject-row input{font-weight:500;font-size:14px;}
+.email-body-area{
+  padding:16px 18px;
+}
+.email-body-area textarea{
+  width:100%;background:transparent;border:none;outline:none;resize:none;
+  font-size:13px;color:var(--text);font-family:'Inter',sans-serif;line-height:1.7;
+  min-height:160px;
+}
+
+/* ── MEETING specific ── */
+.meeting-card{
+  background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+  padding:16px 18px;margin-bottom:16px;
+}
+.meeting-card-title{
+  font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--green);
+  margin-bottom:12px;letter-spacing:.5px;
+}
+.meeting-detail-row{
+  display:flex;gap:12px;align-items:center;margin-bottom:8px;font-size:13px;
+}
+.meeting-detail-key{color:var(--text-muted);min-width:100px;font-family:'JetBrains Mono',monospace;font-size:11px;}
+.meeting-detail-val{color:var(--text);}
+.meet-link-box{
+  display:flex;align-items:center;gap:10px;background:rgba(0,230,118,0.06);
+  border:1px solid var(--border-bright);border-radius:6px;padding:10px 14px;margin-top:8px;
+}
+.meet-link-icon{font-size:18px;}
+.meet-link-url{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--green);word-break:break-all;}
+
+/* ── TRELLO / BOARD specific ── */
+.board-preview{
+  background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+  padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;
+  color:var(--text-dim);line-height:1.6;max-height:320px;overflow-y:auto;
+  white-space:pre-wrap;word-break:break-all;margin-bottom:14px;
+}
+.board-preview::-webkit-scrollbar{width:3px;}
+.board-preview::-webkit-scrollbar-thumb{background:var(--border);}
+
+/* ══════════════ MISC ══════════════ */
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+
+.notification-bar{
+  background:rgba(0,230,118,0.08);border-bottom:1px solid var(--border);
+  padding:6px 20px;font-size:12px;color:var(--text-dim);
+  font-family:'JetBrains Mono',monospace;display:none;
+}
+.notification-bar.show{display:block;}
+
+/* scrollbar global */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* ── Agent Progress ── */
+.node-item{display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:8px;font-size:12px;font-weight:500;color:var(--text-muted);transition:all .2s;}
+.node-item.done{color:var(--green);}
+.node-item.waiting{color:var(--amber);}
+.node-item.running{color:var(--text-dim);}
+.node-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.node-dot.done{background:var(--green);box-shadow:0 0 6px var(--green);}
+.node-dot.waiting{background:var(--amber);box-shadow:0 0 6px var(--amber);animation:pulse 1s infinite;}
+    .node-dot.running{background:var(--text-muted);animation:pulse .6s infinite;}
+
+
+
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="login-screen">
+  <div class="login-logo">
+    <img src="/static/thinktank.png" alt="ThinkTank" id="logo-img" onerror="this.style.display='none'"/>
+  </div>
+  <div class="login-box">
+    <h2>Join Session</h2>
+    <label>Your Name</label>
+    <input type="text" id="login-name" placeholder="Enter your name" maxlength="24" autocomplete="off"/>
+    <label>Room ID</label>
+    <input type="text" id="login-room" placeholder="e.g. ThinkTank" value="ThinkTank" autocomplete="off"/>
+    <button class="btn-login" onclick="doLogin()">ENTER ROOM</button>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app">
+  <header>
+    <div class="header-left">
+      <img class="header-logo" src="static/thinktank.png" alt="" onerror="this.style.display='none'"/>
+    </div>
+    <div class="header-right">
+      <div class="online-indicator">
+        <div class="online-dot"></div>
+        <span id="online-count">1 online</span>
+      </div>
+      <div class="room-tag" id="room-tag">room: ThinkTank</div>
+      <div class="user-badge">
+        <div class="user-avatar" id="header-avatar">?</div>
+        <span class="user-name" id="header-username">User</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="notification-bar" id="notif-bar">⚡ AI is processing your request…</div>
+
+  <div class="main">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-section">Members</div>
+      <div id="member-list"></div>
+
+  <!-- ── Agent Progress ── -->
+      <div class="sidebar-section" id="progress-section" style="display:none;">Progress</div>
+      <div id="node-progress-list"></div>
+
+      <div class="sidebar-section" style="margin-top:auto;">Commands</div>
+      <div class="sidebar-item" style="cursor:default;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);">@AI — trigger assistant</span>
+      </div>
+    </div>
+
+    <!-- Chat -->
+    <div class="chat-area">
+      <div id="messages"></div>
+      <div class="input-bar">
+        <div class="input-hint" id="input-hint">Type a message — use <strong>@AI</strong> to call the assistant</div>
+        <div class="input-row">
+          <textarea id="message-input" rows="1" placeholder="Message ThinkTank…"></textarea>
+          <button class="btn-send" id="send-btn" onclick="sendMessage()">SEND</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ INTERRUPT OVERLAY ══ -->
+<div id="interrupt-overlay">
+  <div class="interrupt-panel" id="interrupt-panel" style="max-width:620px;"></div>
+</div>
+
+<script>
+// ══ State ══
+let ws = null;
+let myUsername = '';
+let roomId = 'ThinkTank';
+let isInterrupt = false;
+let currentInterruptType = null;
+let onlineMembers = new Set();
+let aiStreamBubble = null;
+let aiGroupEl = null;
+
+// ══ Login ══
+document.getElementById('login-name').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+function doLogin() {
+  const name = document.getElementById('login-name').value.trim();
+  const room = document.getElementById('login-room').value.trim() || 'ThinkTank';
+  if (!name) { document.getElementById('login-name').focus(); return; }
+  myUsername = name;
+  roomId = room;
+  document.getElementById('header-username').textContent = name;
+  document.getElementById('header-avatar').textContent = name[0].toUpperCase();
+  document.getElementById('room-tag').textContent = 'room: ' + room;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  connectWS();
+}
+
+// ══ WebSocket ══
+function connectWS() {
+  // guard — don't create a new connection if one already exists
+  if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
+
+  ws = new WebSocket(`ws://localhost:8000/ws`);
+
+  ws.onopen = () => {
+    addSystemMsg('Connected to ThinkTank');
+    addMember(myUsername, true);
+  };
+
+  ws.onmessage = e => handleServer(JSON.parse(e.data));
+
+  ws.onclose = () => {
+    ws = null;  // clear the reference so the guard above lets reconnect through
+    addSystemMsg('Disconnected — reconnecting…');
+    setTimeout(connectWS, 2000);
+  };
+
+  ws.onerror = () => {
+    ws.close();  // triggers onclose which handles reconnect
+  };
+}
+function sendRaw(obj) { if(ws && ws.readyState===1) ws.send(JSON.stringify(obj)); }
+
+// ══ Incoming ══
+function handleServer(msg) {
+  const role = msg.role || msg.type || '';
+  
+  if (msg.type === 'close_interrupt') {
+        closeInterrupt();
+        isInterrupt = false;
+        return;
+  }
+  
+  if (msg.type === 'node_update') {
+    updateNodeProgress(msg.node, msg.status);
+    return;
+  }
+
+  if (msg.type === 'node_clear') {
+    setTimeout(() => {
+        document.getElementById('node-progress-list').innerHTML = '';
+        document.getElementById('progress-section').style.display = 'none';
+    }, 2000); // keep visible for 2s after completion
+    return;
+  }
+
+  // Human message from another user
+  if (role === 'human') {
+    if (msg.username === myUsername) return;
+    addUserMsg(msg.username, msg.text, false);
+    addMember(msg.username, false);
+    return;
+  }
+
+  // AI text response
+  if (role === 'Ai' || role === 'AI') {
+    hideNotif();
+    const content = msg.text || msg.messages || '';
+    if (aiStreamBubble) {
+      // streaming token
+      aiStreamBubble.textContent += content;
+    } else {
+      addAIMsg(content);
+    }
+    return;
+  }
+
+  // Interrupt
+  if (role === 'interrupt' || msg.type === 'interrupt') {
+    hideNotif();
+    isInterrupt = true;
+    currentInterruptType = msg.subtype;
+    renderInterrupt(msg);
+    return;
+  }
+
+  // Error
+  if (role === 'error' || msg.type === 'error') {
+    hideNotif();
+    addSystemMsg('⚠ ' + (msg.message || msg.content || 'Error'));
+    return;
+  }
+
+  // AI streaming token (type=token)
+  if (msg.type === 'token') {
+    if (!aiStreamBubble) { const g = startAIGroup(); aiStreamBubble = g; }
+    aiStreamBubble.textContent += msg.content;
+    scrollBottom();
+    return;
+  }
+
+  if (msg.type === 'done') {
+    aiStreamBubble = null; aiGroupEl = null;
+    hideNotif(); scrollBottom();
+    return;
+  }
+}
+
+function updateNodeProgress(nodeName, status) {
+    // show the section
+    document.getElementById('progress-section').style.display = 'block';
+
+    const list = document.getElementById('node-progress-list');
+
+    // check if this node already exists in the list
+    let existing = document.getElementById('node-' + nodeName.replace(/\s/g, '_'));
+
+    if (!existing) {
+        // create new node item
+        existing = document.createElement('div');
+        existing.className = 'node-item running';
+        existing.id = 'node-' + nodeName.replace(/\s/g, '_');
+        existing.innerHTML = `
+            <div class="node-dot running"></div>
+            <span>${nodeName}</span>
+        `;
+        list.appendChild(existing);
+    }
+
+    // update status
+    existing.className = 'node-item ' + status;
+    const dot = existing.querySelector('.node-dot');
+    dot.className = 'node-dot ' + status;
+
+    // add checkmark for done, pause icon for waiting
+    const label = existing.querySelector('span');
+    if (status === 'done')    label.textContent = nodeName + ' ✓';
+    if (status === 'waiting') label.textContent = nodeName + ' ⏸';
+}
+
+
+// ══ Send ══
+function sendMessage() {
+  const input = document.getElementById('message-input');
+  const text = input.value.trim();
+  if (!text || !ws || ws.readyState !== 1) return;
+
+  // Show own message immediately
+  addUserMsg(myUsername, text, true);
+  input.value = '';
+  input.style.height = 'auto';
+  input.classList.remove('ai-mode');
+  document.getElementById('input-hint').classList.remove('ai-mode');
+  document.getElementById('input-hint').textContent = 'Type a message — use @AI to call the assistant';
+
+  sendRaw({ username: myUsername, text });
+
+  if (text.toLowerCase().startsWith('@ai')) {
+    showNotif('⚡ AI is processing your request…');
+  }
+}
+
+// ══ HITL Resume ══
+function resumeCommand(responsePayload) {
+  sendRaw({ response: responsePayload });
+  closeInterrupt();
+  showNotif('⚡ Resuming…');
+  isInterrupt = false;
+}
+
+function closeInterrupt() {
+  document.getElementById('interrupt-overlay').classList.remove('active');
+}
+
+// ══ Render Interrupt ══
+// single unified renderInterrupt — remove both old ones and replace with this
+function renderInterrupt(msg) {
+    // capture board outline for Trello editing
+    if (msg.subtype === 'Assign_task') {
+        liveBoardOutline = JSON.parse(JSON.stringify(
+            (msg.data?.initial_values?.Board_Outline) || {}
+        ));
+    }
+
+    const type  = msg.subtype;
+    const data  = msg.data || {};
+    const panel = document.getElementById('interrupt-panel');
+
+    if (type === 'Email_agent') {
+        panel.innerHTML = buildEmailPanel(data);
+    } else if (type === 'Meet_scheduler_agent') {
+        panel.innerHTML = buildMeetPanel(data);
+    } else if (type === 'Assign_task') {
+        panel.innerHTML = buildBoardPanel(data);
+    } else {
+        panel.innerHTML = buildGenericPanel(data, type);
+    }
+
+    document.getElementById('interrupt-overlay').classList.add('active');
+}
+
+// ── Email Panel ──
+function buildEmailPanel(data) {
+  const fields  = data.fields || [];
+  const initial = data.initial_values || {};
+  const subject = initial.subject || '';
+  const body    = initial.body || '';
+
+  // pre-fill from fields that have initial values
+  const fMap = {};
+  fields.forEach(f => { fMap[f.name] = f; });
+
+  return `
+  <div class="interrupt-header">
+    <div class="interrupt-title">Email Draft</div>
+    <div class="interrupt-tag">HITL · Email Agent</div>
+  </div>
+  <div class="interrupt-body">
+    <div class="email-draft">
+      <div class="email-draft-header">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:11px;letter-spacing:1.5px;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px;">New Message</div>
+        <div class="email-draft-row">
+          <div class="email-draft-row-label">From</div>
+          <input id="ef-sender" placeholder="your@gmail.com" value=""/>
+        </div>
+        <div class="email-draft-row">
+          <div class="email-draft-row-label">To</div>
+          <input id="ef-to" placeholder="recipient@email.com"/>
+        </div>
+        <div class="email-draft-row">
+          <div class="email-draft-row-label">Cc</div>
+          <input id="ef-cc" placeholder="optional"/>
+        </div>
+        <div class="email-draft-row">
+          <div class="email-draft-row-label">Bcc</div>
+          <input id="ef-bcc" placeholder="optional"/>
+        </div>
+        <div class="email-draft-row email-subject-row" style="border-bottom:none;">
+          <div class="email-draft-row-label">Subject</div>
+          <input id="ef-subject" value="${esc(subject)}" placeholder="Subject"/>
+        </div>
+      </div>
+      <div class="email-body-area">
+        <textarea id="ef-body" rows="8">${esc(body)}</textarea>
+      </div>
+    </div>
+  </div>
+  <div class="interrupt-actions">
+    <button class="btn-reject" onclick="emailReject()">REJECT</button>
+    <button class="btn-approve" onclick="emailApprove()">APPROVE & SEND</button>
+  </div>`;
+}
+
+window.emailApprove = function() {
+  resumeCommand({
+    status:  'approved',
+    subject: v('ef-subject'),
+    body:    v('ef-body'),
+    sender:  v('ef-sender'),
+    to:      v('ef-to').split(',').map(s=>s.trim()).filter(Boolean),
+    cc:      v('ef-cc').split(',').map(s=>s.trim()).filter(Boolean),
+    bcc:     v('ef-bcc').split(',').map(s=>s.trim()).filter(Boolean),
+  });
+};
+window.emailReject = function() {
+  resumeCommand({ status: 'rejected' });
+};
+
+// ── Meeting Panel ──
+function buildMeetPanel(data) {
+  const fields  = data.fields || [];
+  const initial = data.initial_values || {};
+  const details = initial.Meeting_Details || {};
+  const link    = initial.Meet_Link || '';
+
+  return `
+  <div class="interrupt-header">
+    <div class="interrupt-title">Review Meeting</div>
+    <div class="interrupt-tag">HITL · Meet Scheduler</div>
+  </div>
+  <div class="interrupt-body">
+    <div class="meeting-card">
+      <div class="meeting-card-title">${esc(details.summary || 'Scheduled Meeting')}</div>
+      <div class="meeting-detail-row">
+        <div class="meeting-detail-key">Start</div>
+        <div class="meeting-detail-val">${esc(details.start_date_time || '—')}</div>
+      </div>
+      <div class="meeting-detail-row">
+        <div class="meeting-detail-key">End</div>
+        <div class="meeting-detail-val">${esc(details.end_date_time || '—')}</div>
+      </div>
+      <div class="meeting-detail-row">
+        <div class="meeting-detail-key">Duration</div>
+        <div class="meeting-detail-val">${esc(String(details.duration_min || '—'))} min</div>
+      </div>
+      ${link ? `<div class="meet-link-box">
+        <span class="meet-link-icon">📹</span>
+        <a class="meet-link-url" href="${esc(link)}" target="_blank">${esc(link)}</a>
+      </div>` : ''}
+    </div>
+    ${fields.filter(f=>f.name==='feedback').map(f=>`
+    <div class="field-group">
+      <label class="field-label">Feedback (if rescheduling)</label>
+      <input class="field-input" id="mf-feedback" placeholder="e.g. change time to 3pm"/>
+    </div>`).join('')}
+  </div>
+  <div class="interrupt-actions">
+    <button class="btn-reject" onclick="meetReject()">RESCHEDULE</button>
+    <button class="btn-approve" onclick="meetApprove()">APPROVE</button>
+  </div>`;
+}
+
+window.meetApprove = function() { resumeCommand({ decision: 'approve' }); };
+window.meetReject  = function() {
+  resumeCommand({ decision: 'reject', feedback: v('mf-feedback') });
+};
+
+// ── Board / Trello Panel ──
+function buildBoardPanel(data) {
+    const initial = data.initial_values || {};
+    const outline = initial.Board_Outline || {};
+    const boardName = outline.Board_name || 'Trello Board';
+    const lists = outline.lists || [];
+
+    const listsHTML = lists.map((list, listIdx) => {
+        const cardsHTML = list.cards.map((card, cardIdx) => {
+            const checklistsHTML = card.checklists.map(cl => `
+                <div class="tl-checklist">
+                    <div class="tl-checklist-name">☑ ${esc(cl.name)}</div>
+                    ${cl.items.map(item => `
+                        <div class="tl-checklist-item">
+                            <span class="tl-check-box"></span>
+                            <span>${esc(item.name)}</span>
+                        </div>`).join('')}
+                </div>`).join('');
+
+            const dueDate = card.due_date
+                ? new Date(card.due_date).toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'})
+                : null;
+
+            return `
+            <div class="tl-card" data-list="${listIdx}" data-card="${cardIdx}">
+                <div class="tl-card-name" contenteditable="true"
+                     onblur="updateBoard(${listIdx},${cardIdx},'name',this.textContent)">
+                    ${esc(card.name)}
+                </div>
+                <div class="tl-card-desc" contenteditable="true"
+                     onblur="updateBoard(${listIdx},${cardIdx},'description',this.textContent)">
+                    ${esc(card.description)}
+                </div>
+                ${checklistsHTML}
+                <div class="tl-card-footer">
+                    ${dueDate ? `<span class="tl-due">📅 ${dueDate}</span>` : ''}
+                    <span class="tl-assignee">👤 ${esc(card.assignee.slice(-6))}</span>
+                </div>
+            </div>`;
+        }).join('');
+
+        return `
+        <div class="tl-list">
+            <div class="tl-list-header" contenteditable="true"
+                 onblur="updateListName(${listIdx},this.textContent)">
+                ${esc(list.name)}
+            </div>
+            <div class="tl-cards" id="tl-list-${listIdx}">
+                ${cardsHTML}
+            </div>
+        </div>`;
+    }).join('');
+
+    return `
+    <style>
+        .tl-board-title{
+            font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;
+            color:var(--green);letter-spacing:2px;padding:16px 20px 0;
+        }
+        .tl-board{
+            display:flex;gap:14px;padding:16px 20px;overflow-x:auto;
+            min-height:300px;max-height:60vh;
+        }
+        .tl-board::-webkit-scrollbar{height:4px;}
+        .tl-board::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+        .tl-list{
+            min-width:220px;max-width:220px;
+            background:var(--bg3);border:1px solid var(--border);
+            border-radius:8px;display:flex;flex-direction:column;flex-shrink:0;
+        }
+        .tl-list-header{
+            font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;
+            letter-spacing:1px;color:var(--green);text-transform:uppercase;
+            padding:10px 12px;border-bottom:1px solid var(--border);
+            outline:none;cursor:text;
+        }
+        .tl-list-header:focus{background:var(--bg4);}
+        .tl-cards{display:flex;flex-direction:column;gap:8px;padding:10px 8px;overflow-y:auto;flex:1;}
+        .tl-cards::-webkit-scrollbar{width:3px;}
+        .tl-cards::-webkit-scrollbar-thumb{background:var(--border);}
+        .tl-card{
+            background:var(--surface2);border:1px solid var(--border);
+            border-radius:6px;padding:10px 10px 8px;
+            transition:border-color .15s;
+        }
+        .tl-card:hover{border-color:var(--border-bright);}
+        .tl-card-name{
+            font-size:13px;font-weight:500;color:var(--text);
+            margin-bottom:6px;outline:none;cursor:text;
+            border-bottom:1px solid transparent;transition:border-color .15s;
+        }
+        .tl-card-name:focus{border-bottom-color:var(--green);}
+        .tl-card-desc{
+            font-size:11px;color:var(--text-muted);line-height:1.5;
+            margin-bottom:8px;outline:none;cursor:text;
+        }
+        .tl-card-desc:focus{color:var(--text-dim);}
+        .tl-checklist{margin-bottom:6px;}
+        .tl-checklist-name{
+            font-family:'JetBrains Mono',monospace;font-size:10px;
+            color:var(--green);margin-bottom:4px;letter-spacing:.5px;
+        }
+        .tl-checklist-item{
+            display:flex;align-items:flex-start;gap:6px;
+            font-size:11px;color:var(--text-muted);padding:2px 0;line-height:1.4;
+        }
+        .tl-check-box{
+            width:10px;height:10px;border:1px solid var(--text-muted);
+            border-radius:2px;flex-shrink:0;margin-top:2px;
+        }
+        .tl-card-footer{
+            display:flex;align-items:center;justify-content:space-between;
+            margin-top:8px;padding-top:6px;border-top:1px solid var(--border);
+        }
+        .tl-due{font-size:10px;color:var(--amber);font-family:'JetBrains Mono',monospace;}
+        .tl-assignee{
+            font-size:10px;color:var(--text-muted);
+            font-family:'JetBrains Mono',monospace;
+        }
+        .tl-feedback-row{padding:0 20px 16px;display:flex;flex-direction:column;gap:6px;}
+    </style>
+
+    <div class="interrupt-header">
+        <div class="interrupt-title">Review Trello Board</div>
+        <div class="interrupt-tag">HITL · Task Assign</div>
+    </div>
+
+    <div class="tl-board-title">${esc(boardName)}</div>
+    <div class="tl-board" id="tl-board">${listsHTML}</div>
+
+    <div class="tl-feedback-row">
+        <label class="field-label">Feedback (if rejecting)</label>
+        <input class="field-input" id="bf-feedback" placeholder="e.g. add a testing phase, change assignees…"/>
+    </div>
+
+    <div class="interrupt-actions">
+        <button class="btn-reject" onclick="boardReject()">REJECT</button>
+        <button class="btn-approve" onclick="boardApprove()">APPROVE & CREATE</button>
+    </div>`;
+}
+// store the live board outline so edits are captured
+let liveBoardOutline = null;
+
+
+function updateBoard(listIdx, cardIdx, field, value) {
+    if (!liveBoardOutline) return;
+    liveBoardOutline.lists[listIdx].cards[cardIdx][field] = value.trim();
+}
+
+function updateListName(listIdx, value) {
+    if (!liveBoardOutline) return;
+    liveBoardOutline.lists[listIdx].name = value.trim();
+}
+// show feedback field when rejected selected
+document.addEventListener('change', e => {
+  if (e.target.id === 'bf-status') {
+    document.getElementById('bf-feedback-group').style.display =
+      e.target.value === 'rejected' ? 'block' : 'none';
+  }
+});
+
+window.boardApprove = function() {
+    resumeCommand({ status: 'approved', Board_Outline: liveBoardOutline });
+};
+
+window.boardReject = function() {
+    resumeCommand({ status: 'rejected', feedback: v('bf-feedback') });
+};
+
+// ── Generic fallback ──
+function buildGenericPanel(data, type) {
+  const fields  = data.fields || [];
+  const initial = data.initial_values || {};
+
+  const fieldsHTML = fields.map(f => {
+    const initVal = initial[f.name] !== undefined ? initial[f.name] : '';
+    if (f.type === 'select') {
+      const opts = (f.options||[]).map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('');
+      return `<div class="field-group"><label class="field-label">${esc(f.name)}</label>
+        <select class="field-select" id="gf-${esc(f.name)}">${opts}</select></div>`;
+    }
+    if (f.type === 'textarea') {
+      return `<div class="field-group"><label class="field-label">${esc(f.name)}</label>
+        <textarea class="field-textarea" id="gf-${esc(f.name)}" rows="6">${esc(typeof initVal==='object'?JSON.stringify(initVal,null,2):String(initVal))}</textarea></div>`;
+    }
+    return `<div class="field-group"><label class="field-label">${esc(f.name)}</label>
+      <input class="field-input" id="gf-${esc(f.name)}" value="${esc(String(initVal))}"/></div>`;
+  }).join('');
+
+  return `
+  <div class="interrupt-header">
+    <div class="interrupt-title">Review Required</div>
+    <div class="interrupt-tag">HITL · ${esc(type)}</div>
+  </div>
+  <div class="interrupt-body">${fieldsHTML}</div>
+  <div class="interrupt-actions">
+    <button class="btn-reject" onclick="closeInterrupt()">CANCEL</button>
+    <button class="btn-approve" onclick="genericSubmit()">SUBMIT</button>
+  </div>`;
+}
+
+window.genericSubmit = function() {
+  const panel = document.getElementById('interrupt-panel');
+  const inputs = panel.querySelectorAll('[id^="gf-"]');
+  const payload = {};
+  inputs.forEach(el => {
+    const name = el.id.replace('gf-','');
+    let val = el.value;
+    try { val = JSON.parse(val); } catch {}
+    payload[name] = val;
+  });
+  resumeCommand(payload);
+};
+
+// ══ DOM helpers ══
+function addUserMsg(username, text, isSelf) {
+  const chat = document.getElementById('messages');
+  const wrap  = document.createElement('div');
+  wrap.className = isSelf ? 'msg-row-self' : 'msg-row-other';
+  const bubbleCls = isSelf ? 'bubble-self' : 'bubble-other';
+  const nameCls   = isSelf ? 'self' : 'other';
+  const time = timeStr();
+  wrap.innerHTML = `
+    <div class="msg-group">
+      <div class="msg-meta">
+        <span class="msg-username ${nameCls}">${esc(username)}</span>
+        <span class="msg-time">${time}</span>
+      </div>
+      <div class="msg-bubble ${bubbleCls}">${esc(text)}</div>
+    </div>`;
+  chat.appendChild(wrap);
+  scrollBottom();
+}
+
+function addAIMsg(text) {
+  const chat = document.getElementById('messages');
+  const wrap  = document.createElement('div');
+  wrap.className = 'msg-row-ai';
+  wrap.innerHTML = `
+    <div class="msg-group">
+      <div class="ai-label">AI Response</div>
+      <div class="msg-bubble bubble-ai">${esc(text)}</div>
+    </div>`;
+  chat.appendChild(wrap);
+  scrollBottom();
+}
+
+function startAIGroup() {
+  const chat = document.getElementById('messages');
+  const wrap  = document.createElement('div');
+  wrap.className = 'msg-row-ai';
+  wrap.innerHTML = `<div class="msg-group"><div class="ai-label">AI Response</div><div class="msg-bubble bubble-ai" id="ai-stream-bubble"></div></div>`;
+  chat.appendChild(wrap);
+  scrollBottom();
+  return document.getElementById('ai-stream-bubble');
+}
+
+function addSystemMsg(text) {
+  const chat = document.getElementById('messages');
+  const wrap  = document.createElement('div');
+  wrap.className = 'msg-row-system';
+  wrap.innerHTML = `<div class="msg-bubble bubble-system">${esc(text)}</div>`;
+  chat.appendChild(wrap);
+  scrollBottom();
+}
+
+function addMember(name, isSelf) {
+  onlineMembers.add(name);
+  renderMemberList();
+  document.getElementById('online-count').textContent = onlineMembers.size + ' online';
+}
+
+function renderMemberList() {
+  const list = document.getElementById('member-list');
+  list.innerHTML = '';
+  onlineMembers.forEach(name => {
+    const item = document.createElement('div');
+    item.className = 'sidebar-item' + (name===myUsername?' active':'');
+    item.innerHTML = `<div class="sidebar-dot online"></div><span>${esc(name)}${name===myUsername?' (you)':''}</span>`;
+    list.appendChild(item);
+  });
+}
+
+function showNotif(text) {
+  const bar = document.getElementById('notif-bar');
+  bar.textContent = text; bar.classList.add('show');
+}
+function hideNotif() { document.getElementById('notif-bar').classList.remove('show'); }
+
+function scrollBottom() {
+  const c = document.getElementById('messages');
+  c.scrollTop = c.scrollHeight;
+}
+
+function timeStr() {
+  return new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}
+
+function v(id) { return (document.getElementById(id)||{}).value || ''; }
+function esc(s='') {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ══ Input UX ══
+const inp = document.getElementById('message-input');
+inp.addEventListener('input', function() {
+  this.style.height='auto';
+  this.style.height=Math.min(this.scrollHeight,120)+'px';
+  const isAI = this.value.trim().toLowerCase().startsWith('@ai');
+  this.classList.toggle('ai-mode', isAI);
+  const hint = document.getElementById('input-hint');
+  hint.classList.toggle('ai-mode', isAI);
+  hint.textContent = isAI
+    ? '⚡ AI will be triggered when you send'
+    : 'Type a message — use @AI to call the assistant';
+});
+inp.addEventListener('keydown', e => {
+  if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+</script>
+</body>
+</html>
