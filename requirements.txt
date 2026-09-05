@@ -1,0 +1,48 @@
+# Core
+fastapi
+uvicorn[standard]
+python-dotenv
+aiofiles
+
+# LangGraph + LangChain
+langgraph
+langchain
+langchain-core
+langchain-openai
+langchain-text-splitters
+langgraph-checkpoint-sqlite
+
+# WebSocket
+websockets
+
+# Google APIs
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
+
+# Email
+# (uses built-in smtplib — no extra install needed)
+
+# Trello
+# (uses built-in requests — no extra install needed)
+
+# Search Agent
+ddgs
+trafilatura
+selenium
+rank-bm25
+nltk
+scikit-learn
+openai
+
+# PDF / Report Agent
+pydantic
+pdfkit
+weasyprint
+
+# Utilities
+requests
+pytz
+uuid
+matplotlib
